@@ -8,25 +8,27 @@ try:
   Parser = ArgumentParser(prog='ofwareshub-client')
   SubParsers = Parser.add_subparsers(help='sub-command help')
 
-  ReportParser = SubParsers.add_parser("report", help="display report")
+  ReportParser = SubParsers.add_parser("report",help="display report")
   ReportParser.set_defaults(which="report")
 
-  CloneParser = SubParsers.add_parser("clone", help="clone wares from repositories")
-  CloneParser.add_argument("-p","--pattern")
+  CloneParser = SubParsers.add_parser("clone",help="clone wares from repositories")
+  CloneParser.add_argument("-f","--filter-id",help="process wares filtered by given id")
   CloneParser.set_defaults(which="clone")
 
   BuildParser = SubParsers.add_parser("build", help="build wares")
-  BuildParser.add_argument("-p","--pattern")
+  BuildParser.add_argument("-f","--filter-id",help="process wares filtered by given id")
   BuildParser.add_argument("-b","--branch")
-  BuildParser.add_argument("-g","--grouped")
+  BuildParser.add_argument("-g","--grouped",action="store_true")
   BuildParser.set_defaults(which="build")
   
   FetchParser = SubParsers.add_parser("fetch", help="fetch latest commits for wares")
-  FetchParser.add_argument("-p","--pattern")
+  FetchParser.add_argument("-f","--filter-id",help="process wares filtered by given id")
   FetchParser.set_defaults(which="fetch")
   
   Sim2DocParser = SubParsers.add_parser("sim2doc", help="generate doc for wares")
-  Sim2DocParser.add_argument("-p","--pattern")
+  Sim2DocParser.add_argument("-f","--filter-id",help="process wares filtered by given id")
+  Sim2DocParser.add_argument("-b","--branch")
+  Sim2DocParser.add_argument("-g","--grouped",action="store_true")  
   Sim2DocParser.set_defaults(which="sim2doc")
     
   Args = Parser.parse_args()

@@ -168,6 +168,9 @@ class ManagementTools:
         Env["GIT_ASKPASS"] = self.TempDir+"/"+"getpass.sh"
         P = subprocess.Popen(Command,env=Env)
         P.wait()
+        
+        print ""
+        
     else:
       print "All available wares are already cloned"    
 
@@ -176,11 +179,83 @@ class ManagementTools:
 ############################################################################
 
     
-  def runFetch(self,Options):
+  def runUpdate(self,Options):
+    
+    if Options["merge_branch"] and not Options["remote"]:
+      print "-r/--remote option is missing"
+      return
+    
     Report = self.getReportData()
+    
+    
+    Errors = {}    
+    Errors["branch"] = []
+    Errors["merge"] = []
         
     if Report["cloned"]:
-      print "not implemented"
+      
+      if Options["filter_id"]:
+        Report["cloned"] = self.filterByID(Report["cloned"],Options["filter_id"])
+      
+      self.cacheUserPassword()
+      
+      for WareID, WareInfos in Report["cloned"].iteritems():
+        
+        print "################################################################"
+        print " Updating",
+        print WareID
+        print "################################################################"
+
+        SourceDir = os.path.join(os.getcwd(),WareID)
+        
+        # checkout branch
+        
+        Command = ["git","fetch"]
+        
+        if Options["remote"]:
+          Command.append(Options["remote"])  
+
+        if Options["all"]:
+          Command.append("--all")
+        
+        Env = os.environ.copy()
+        Env["GIT_ASKPASS"] = self.TempDir+"/"+"getpass.sh"
+        
+        P = subprocess.Popen(Command,cwd=SourceDir,env=Env)
+        P.wait()
+        
+        if Options["merge_branch"]:
+          
+          P = subprocess.Popen(["git","checkout",Options["merge_branch"]],cwd=SourceDir)
+          P.wait()
+          
+          if P.returncode == 0:
+            P = subprocess.Popen(["git","merge",Options["remote"]+"/"+Options["merge_branch"]],cwd=SourceDir)
+            P.wait()
+            
+            if P.returncode != 0:
+              Errors["merge"].append(WareID)
+              
+          else:
+            Errors["branch"].append(WareID)  
+                  
+        print "" 
+                
+        
+      if len(Errors["branch"]) > 0:
+        print "Branch errors:"
+          
+        for ErrorID in Errors["branch"]:
+            print "  -",
+            print ErrorID    
+      
+      if len(Errors["merge"]) > 0:
+        print "Merge errors:"
+          
+        for ErrorID in Errors["config"]:
+            print "  -",
+            print ErrorID
+
     else:
       print "No ware available"    
 
@@ -190,6 +265,11 @@ class ManagementTools:
 
     
   def runBuild(self,Options):
+
+    if not Options["branch"]:
+      print "-b/--branch option is missing"
+      return
+    
     Report = self.getReportData()
     
     Errors = {}    
@@ -268,7 +348,7 @@ class ManagementTools:
             print "  -",
             print ErrorID
 
-      if len(Errors["branch"]) > 0:
+      if len(Errors["build"]) > 0:
         print "Build errors:"
           
         for ErrorID in Errors["build"]:
@@ -284,6 +364,13 @@ class ManagementTools:
 
 
   def runSim2Doc(self,Options):
+    
+    print Options
+    
+    if not Options["branch"]:
+      print "-b/--branch option is missing"
+      return
+    
     Report = self.getReportData()
         
     Errors = {}    
@@ -330,14 +417,12 @@ class ManagementTools:
             P = subprocess.Popen(Command,cwd=BuildDir)
             P.wait()
           
-            if P.returncode == 0 and Options["grouped"] :
+            if Options["grouped"] :
               GroupedDir = os.path.join(os.getcwd(),"_sim2doc-"+Options["branch"]) 
               if not os.path.isdir(GroupedDir):
                 os.makedirs(GroupedDir)
-                shutil.copyfile(os.path.join(BuildDir,WareID+".pdf"), os.path.join(GroupedDir,WareID+".pdf"))
+              shutil.copyfile(os.path.join(BuildDir,WareID+".pdf"), os.path.join(GroupedDir,WareID+".pdf"))
           
-            else:
-              Errors["sim2doc"].append(WareID)
           else:    
             Errors["config"].append(WareID)  
         else:
@@ -369,3 +454,28 @@ class ManagementTools:
             print ErrorID                             
     else:
       print "No ware available"    
+
+
+############################################################################
+############################################################################
+
+
+  def runCheck(self,Options):
+    Report = self.getReportData()
+    
+    if Report["cloned"]:
+      
+      if Options["filter_id"]:
+        Report["cloned"] = self.filterByID(Report["cloned"],Options["filter_id"])
+      
+      for WareID, WareInfos in Report["cloned"].iteritems():
+        
+        print "################################################################"
+        print " Checking",
+        print WareID
+        print "################################################################"
+        
+        print "not implemented"
+        
+    else:
+      print "No ware available"        
